@@ -1,0 +1,16 @@
+x Map large pages
+  x Already done (check via tracefs)
+
+x Copy keys to DRAM first
+  x Huge speedup
+  x Use stdio to read/write records
+    x also speedup
+  x Or PMDK with non-temporal writes of 100B size?
+    x Made it worse
+
+* Replace qsort/memcmp with something else?
+  * AVX-512 sort? Didn't find one that can treat arbitrary keys.
+   
+* Split keys from pointers in DRAM. Reduce pointer size.
+
+* Allow non-power-of-two number of mappers
