@@ -1,0 +1,4 @@
+*.o
+check
+partition
+qsort
