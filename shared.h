@@ -16,7 +16,7 @@
 #define KEYLEN	10
 #define VALLEN	90
 
-#define MAXPARTITIONS	512			// Needs to fit in a uint32_t
+#define MAXPARTITIONS	256			// Needs to fit in a uint8_t
 #define POWEROFTWO(x)	(!(x & (x - 1)) && x)
 
 #ifdef USE_STDIO

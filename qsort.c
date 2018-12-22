@@ -13,9 +13,10 @@
 
 #ifdef DRAM_KEYS
 struct keyptr {
-  struct record *ptr;
+  /* struct record *ptr; */
+  uint32_t recnum;
   uint8_t key[KEYLEN];
-};
+} __attribute__ ((packed));
 #endif
 
 static int infd[MAXPARTITIONS];
@@ -100,9 +101,11 @@ int main(int argc, char *argv[])
 #endif
   size_t cnt = 0;
   for(int n = 0; n < npartitions; n++) {
+    assert(infsize[n] / sizeof(struct record) < (1 << 24));
     for(size_t i = 0; i < infsize[n] / sizeof(struct record); i++) {
 #ifdef DRAM_KEYS
-      unsorted_ptrs[cnt].ptr = &unsorted[n][i];
+      /* unsorted_ptrs[cnt].ptr = &unsorted[n][i]; */
+      unsorted_ptrs[cnt].recnum = (n << 24) | i;
       memcpy(&unsorted_ptrs[cnt].key, &unsorted[n][i].key, KEYLEN);
       cnt++;
 #else
@@ -135,11 +138,15 @@ int main(int argc, char *argv[])
   for(size_t i = 0; i < nrecords; i++) {
 #ifdef USE_STDIO
 #	ifdef DRAM_KEYS
+    // Attempt to read keys from DRAM (made it slower)
 /*     size_t ret = fwrite(&unsorted_ptrs[i].key, KEYLEN, 1, outfile); */
 /*     assert(ret == 1); */
 /*     ret = fwrite(&unsorted_ptrs[i].ptr->val, VALLEN, 1, outfile); */
 /*     assert(ret == 1); */
-    size_t ret = fwrite(unsorted_ptrs[i].ptr, sizeof(struct record), 1, outfile);
+    /* size_t ret = fwrite(unsorted_ptrs[i].ptr, sizeof(struct record), 1, outfile); */
+    int fnum = unsorted_ptrs[i].recnum >> 24;
+    size_t recnum = unsorted_ptrs[i].recnum & ((1 << 24) - 1);
+    size_t ret = fwrite(&unsorted[fnum][recnum], sizeof(struct record), 1, outfile);
     assert(ret == 1);
 #	else
     size_t ret = fwrite(unsorted_ptrs[i], sizeof(struct record), 1, outfile);

@@ -9,8 +9,15 @@ x Copy keys to DRAM first
     x Made it worse
 
 * Replace qsort/memcmp with something else?
-  * AVX-512 sort? Didn't find one that can treat arbitrary keys.
-   
-* Split keys from pointers in DRAM. Reduce pointer size.
+  * AVX-512 sort? Didn't find one that can treat arbitrary keys (only
+    uint32_t, uint64_t).
+
+x Split keys from pointers in DRAM
+  x Made it slightly slower
+
+x Reduce pointer size
+  x Small speedup
 
 x Allow non-power-of-two number of mappers
+
+* qsort file-by-file (as we read them) and then merge-sort the lot?
