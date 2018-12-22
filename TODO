@@ -13,4 +13,4 @@ x Copy keys to DRAM first
    
 * Split keys from pointers in DRAM. Reduce pointer size.
 
-* Allow non-power-of-two number of mappers
+x Allow non-power-of-two number of mappers

@@ -23,13 +23,14 @@ int main(int argc, char *argv[])
 
   // Open input file
   int npartitions = atoi(argv[3]);
-  assert(npartitions <= MAXPARTITIONS && npartitions > 1 && POWEROFTWO(npartitions));
+  /* assert(npartitions <= MAXPARTITIONS && npartitions > 1 && POWEROFTWO(npartitions)); */
+  assert(npartitions <= MAXPARTITIONS && npartitions > 1);
   int infd = open(argv[1], O_RDONLY);
   assert(infd != -1);
   size_t fsize = filesize(argv[1]);
   assert(fsize % sizeof(struct record) == 0);
   size_t nrecords = fsize / sizeof(struct record);
-  assert(nrecords % npartitions == 0);
+  /* assert(nrecords % npartitions == 0); */
 
   // Open all output partitions
   for(int i = 0; i < npartitions; i++) {
@@ -57,9 +58,11 @@ int main(int argc, char *argv[])
 #endif
 
   // Copy input to output range partitions
-  int bits = log2(npartitions);
+  /* int bits = log2(npartitions); */
+  int divisor = ceil((float)(1ULL << 32) / (float)npartitions);
   for(size_t i = 0; i < nrecords; i++) {
-    uint32_t outpart = be32toh(input[i].msb32) >> (32 - bits);
+    /* uint32_t outpart = be32toh(input[i].msb32) >> (32 - bits); */
+    uint32_t outpart = be32toh(input[i].msb32) / divisor;
 #ifdef USE_STDIO
     size_t ret = fwrite(&input[i], sizeof(struct record), 1, outfile[outpart]);
     assert(ret == 1);

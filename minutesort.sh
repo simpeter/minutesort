@@ -8,7 +8,7 @@ RECORDS=$((256 * 1024 * 1024))
 RECORDSIZE=100
 NODES=(localhost)
 NUMA_PATHS=(/mnt/pmem12)
-NUMA_CORES=32
+NUMA_CORES=24
 TIME=
 TIMESTAMP=
 
@@ -21,9 +21,8 @@ let numa_nodes=${#NUMA_PATHS[*]}
 let mappers=NUMA_CORES*numa_nodes*n
 
 [ $mappers -gt 1 ] || (echo "mappers ($mappers) must be > 1 !"; exit 1)
-[ $((RECORDS % mappers)) = 0 ] || (echo "RECORDS ($RECORDS) % mappers ($mappers) != 0 ($((RECORDS % mappers))) !"; exit 1)
-
-let maprecords=RECORDS/mappers
+# [ $((RECORDS % mappers)) = 0 ] || (echo "RECORDS ($RECORDS) % mappers ($mappers) != 0 ($((RECORDS % mappers))) !"; exit 1)
+let RECORDS-=RECORDS%mappers
 
 while getopts gtvhTS opt; do
     case $opt in
@@ -57,7 +56,7 @@ done
 
 echo "Configuration: generate = $generate, tencentsort = $tencentsort, validate = $validate"
 
-echo "Initiating control connections to (${NODES[*]})..."
+echo "Opening control connections to (${NODES[*]})..."
 for node in ${NODES[*]}; do
     test -a socket.$node || ssh -Mf -S socket.$node $node "sleep 5m"
 done
@@ -65,10 +64,11 @@ done
 if [ $generate = yes ]; then
     echo "Generating unsorted input files..."
     c=0
+    let maprecords=RECORDS/mappers
     for node in ${NODES[*]}; do
 	ssh -S socket.$node -T $node <<-EOF &
 #    set -x
-    start=0
+    start=$c
 
     for p in $NUMA_PATHS; do
     	rm -f \$p/unsorted.* \$p/sorted.* \$p/$node.*.*
@@ -152,7 +152,7 @@ EOF
     python <<EOF
 tb = ($RECORDS * $RECORDSIZE) / 1000000000.0
 duration = $ENDTIME - $STARTTIME
-print("Sorted %.2f GB in %u seconds => %.2f GB/minute, %.2f GB/s" % (tb, duration, (tb / duration) * 60, tb / duration))
+print("Sorted $RECORDS records (%.2f GB) in %u seconds => %.2f GB/minute, %.2f GB/s" % (tb, duration, (tb / duration) * 60, tb / duration))
 EOF
     echo "---------------------"
 fi

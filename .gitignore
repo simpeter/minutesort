@@ -2,3 +2,6 @@
 check
 partition
 qsort
+*.sum
+checksums.txt
+validation.txt
