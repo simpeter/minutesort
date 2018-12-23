@@ -1,4 +1,6 @@
-CFLAGS = -O3 -march=skylake-avx512 -mavx512f -mavx512cd -mavx512vl -mavx512bw -mavx512dq -g -std=gnu99 -Wall
+# All the -m flags didn't seem to make a performance difference
+#CFLAGS = -O3 -march=skylake-avx512 -mavx512f -mavx512cd -mavx512vl -mavx512bw -mavx512dq -g -std=gnu99 -Wall
+CFLAGS = -O3 -g -std=gnu99 -Wall
 #CFLAGS = -g -std=gnu99 -Wall
 CFLAGS += -DPERF_DEBUG
 LDFLAGS = -lm

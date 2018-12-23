@@ -5,3 +5,4 @@ qsort
 *.sum
 checksums.txt
 validation.txt
+*.csv

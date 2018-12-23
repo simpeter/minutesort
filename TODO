@@ -21,3 +21,8 @@ x Reduce pointer size
 x Allow non-power-of-two number of mappers
 
 * qsort file-by-file (as we read them) and then merge-sort the lot?
+
+x Look at membw_stdio to see if we're conducting IO efficiently
+  x We are. 7.2 GB/s read & write throughput.
+
+* qsort on NVM (to overlap compute with IO)

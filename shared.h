@@ -20,7 +20,7 @@
 #define POWEROFTWO(x)	(!(x & (x - 1)) && x)
 
 #ifdef USE_STDIO
-#	define STDIO_BUFFER_SIZE	(1 * 1024 * 1024)
+#	define STDIO_BUFFER_SIZE	65536
 #endif
 
 struct record {
