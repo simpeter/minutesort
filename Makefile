@@ -10,7 +10,7 @@ all: qsort partition check inplace
 #qsort: CFLAGS += -DUSE_PMDK -DDRAM_KEYS
 qsort: CFLAGS += -DUSE_STDIO -DDRAM_KEYS -DUSE_HUGEPAGES
 # qsort: LDFLAGS = -lpmem
-qsort: qsort.o
+qsort: qsort.o quicksort.o
 inplace: inplace.o
 partition: CFLAGS += -DUSE_STDIO
 partition: partition.o

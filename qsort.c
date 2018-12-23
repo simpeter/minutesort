@@ -23,7 +23,12 @@ static int infd[MAXPARTITIONS];
 static struct record *unsorted[MAXPARTITIONS];
 static ssize_t infsize[MAXPARTITIONS];
 
-static int compare(const void *a, const void *b)
+typedef int (*__compar_d_fn_t) (const void *, const void *, void *);
+
+extern void _quicksort (void *const pbase, size_t total_elems,
+			size_t size, __compar_d_fn_t cmp, void *arg);
+
+static int compare(const void *a, const void *b, void *dummy)
 {
 #ifdef DRAM_KEYS
   const struct keyptr *ra = a, *rb = b;
@@ -123,7 +128,8 @@ int main(int argc, char *argv[])
 
   // Sort the pointers
 #ifdef DRAM_KEYS
-  qsort(unsorted_ptrs, nrecords, sizeof(struct keyptr), compare);
+  /* qsort(unsorted_ptrs, nrecords, sizeof(struct keyptr), compare); */
+  _quicksort(unsorted_ptrs, nrecords, sizeof(struct keyptr), compare, NULL);
 #else
   qsort(unsorted_ptrs, nrecords, sizeof(struct record *), compare);
 #endif

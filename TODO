@@ -27,3 +27,8 @@ x Look at membw_stdio to see if we're conducting IO efficiently
 
 x qsort on NVM (to overlap compute with IO)
    x Slower. Probably latency bound.
+
+x partition with fread didn't make a perf difference versus mmap
+
+* Use quickselect instead of sort to find lowest elements as quickly
+  as possible. Use to overlap with writing (current bottleneck)
