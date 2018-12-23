@@ -6,3 +6,4 @@ qsort
 checksums.txt
 validation.txt
 *.csv
+inplace

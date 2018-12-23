@@ -25,4 +25,5 @@ x Allow non-power-of-two number of mappers
 x Look at membw_stdio to see if we're conducting IO efficiently
   x We are. 7.2 GB/s read & write throughput.
 
-* qsort on NVM (to overlap compute with IO)
+x qsort on NVM (to overlap compute with IO)
+   x Slower. Probably latency bound.

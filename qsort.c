@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     assert(infd[i] != -1);
     infsize[i] = filesize(argv[i + 2]);
     unsorted[i] = mmap(NULL, infsize[i], PROT_READ, MAP_SHARED | MAP_POPULATE, infd[i], 0);
-    assert(unsorted != MAP_FAILED);
+    assert(unsorted[i] != MAP_FAILED);
     fsize += infsize[i];
   }
 
