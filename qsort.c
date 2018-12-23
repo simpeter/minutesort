@@ -131,7 +131,8 @@ int main(int argc, char *argv[])
   /* qsort(unsorted_ptrs, nrecords, sizeof(struct keyptr), compare); */
   _quicksort(unsorted_ptrs, nrecords, sizeof(struct keyptr), compare, NULL);
 #else
-  qsort(unsorted_ptrs, nrecords, sizeof(struct record *), compare);
+  /* qsort(unsorted_ptrs, nrecords, sizeof(struct record *), compare); */
+  _quicksort(unsorted_ptrs, nrecords, sizeof(struct keyptr), compare, NULL);
 #endif
 
 #ifdef PERF_DEBUG
