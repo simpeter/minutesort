@@ -24,6 +24,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include "quicksort.h"
 
 /* Byte-wise swap two items of size SIZE. */
 #define SWAP(a, b, size)						      \
@@ -50,6 +51,9 @@ typedef struct
   {
     char *lo;
     char *hi;
+#ifdef QUICKSELECT
+    char *mid;
+#endif
   } stack_node;
 
 /* The next 4 #defines implement a very fast in-line stack abstraction. */
@@ -62,6 +66,9 @@ typedef struct
 #define	POP(low, high)	((void) (--top, (low = top->lo), (high = top->hi)))
 #define	STACK_NOT_EMPTY	(stack < top)
 
+#define SPUSH(low, high, middle)	((void) ((s->top->lo = (low)), (s->top->hi = (high)), (s->top->mid = (middle)), ++s->top))
+#define	SPOP(low, high)	((void) (--s->top, (low = s->top->lo), (high = s->top->hi)))
+#define	SSTACK_NOT_EMPTY	(s->stack < s->top)
 
 /* Order size using quicksort.  This implementation incorporates
    four optimizations discussed in Sedgewick:
@@ -250,104 +257,123 @@ _quicksort (void *const pbase, size_t total_elems, size_t size,
   }
 }
 
+#ifdef QUICKSELECT
+struct quickselect_state {
+  char *lo, *mid, *hi;
+  stack_node stack[STACK_SIZE], *top;
+  char *left_ptr, *right_ptr;
+};
+
+static struct quickselect_state qs_state;
+
 void
 quickselect (void *const pbase, size_t total_elems, size_t size,
 	     __compar_d_fn_t cmp, void *arg, void *elem)
 {
+  struct quickselect_state *s = &qs_state;
   char *base_ptr = (char *) pbase;
 
+  if(s->top != NULL) {
+    goto resume;
+  }
+  
   if (total_elems == 0)
     /* Avoid lossage with unsigned arithmetic below.  */
     return;
 
   if (total_elems > MAX_THRESH)
     {
-      char *lo = base_ptr;
-      char *hi = &lo[size * (total_elems - 1)];
-      stack_node stack[STACK_SIZE];
-      stack_node *top = stack;
+      s->lo = base_ptr;
+      s->hi = &s->lo[size * (total_elems - 1)];
+      s->top = s->stack;
 
-      PUSH (NULL, NULL);
+      SPUSH (NULL, NULL, NULL);
 
-      while (STACK_NOT_EMPTY)
+      while (SSTACK_NOT_EMPTY)
         {
-          char *left_ptr;
-          char *right_ptr;
-
 	  /* Select median value from among LO, MID, and HI. Rearrange
 	     LO and HI so the three values are sorted. This lowers the
 	     probability of picking a pathological pivot value and
 	     skips a comparison for both the LEFT_PTR and RIGHT_PTR in
 	     the while loops. */
 
-	  char *mid = lo + size * ((hi - lo) / size >> 1);
+	  s->mid = s->lo + size * ((s->hi - s->lo) / size >> 1);
 
-	  if ((*cmp) ((void *) mid, (void *) lo, arg) < 0)
-	    SWAP (mid, lo, size);
-	  if ((*cmp) ((void *) hi, (void *) mid, arg) < 0)
-	    SWAP (mid, hi, size);
+	  if ((*cmp) ((void *) s->mid, (void *) s->lo, arg) < 0)
+	    SWAP (s->mid, s->lo, size);
+	  if ((*cmp) ((void *) s->hi, (void *) s->mid, arg) < 0)
+	    SWAP (s->mid, s->hi, size);
 	  else
 	    goto jump_over;
-	  if ((*cmp) ((void *) mid, (void *) lo, arg) < 0)
-	    SWAP (mid, lo, size);
+	  if ((*cmp) ((void *) s->mid, (void *) s->lo, arg) < 0)
+	    SWAP (s->mid, s->lo, size);
 	jump_over:;
 
-	  left_ptr  = lo + size;
-	  right_ptr = hi - size;
+	  s->left_ptr  = s->lo + size;
+	  s->right_ptr = s->hi - size;
 
 	  /* Here's the famous ``collapse the walls'' section of quicksort.
 	     Gotta like those tight inner loops!  They are the main reason
 	     that this algorithm runs much faster than others. */
 	  do
 	    {
-	      while ((*cmp) ((void *) left_ptr, (void *) mid, arg) < 0)
-		left_ptr += size;
+	      while ((*cmp) ((void *) s->left_ptr, (void *) s->mid, arg) < 0)
+		s->left_ptr += size;
 
-	      while ((*cmp) ((void *) mid, (void *) right_ptr, arg) < 0)
-		right_ptr -= size;
+	      while ((*cmp) ((void *) s->mid, (void *) s->right_ptr, arg) < 0)
+		s->right_ptr -= size;
 
-	      if (left_ptr < right_ptr)
+	      if (s->left_ptr < s->right_ptr)
 		{
-		  SWAP (left_ptr, right_ptr, size);
-		  if (mid == left_ptr)
-		    mid = right_ptr;
-		  else if (mid == right_ptr)
-		    mid = left_ptr;
-		  left_ptr += size;
-		  right_ptr -= size;
+		  SWAP (s->left_ptr, s->right_ptr, size);
+		  if (s->mid == s->left_ptr)
+		    s->mid = s->right_ptr;
+		  else if (s->mid == s->right_ptr)
+		    s->mid = s->left_ptr;
+		  s->left_ptr += size;
+		  s->right_ptr -= size;
 		}
-	      else if (left_ptr == right_ptr)
+	      else if (s->left_ptr == s->right_ptr)
 		{
-		  left_ptr += size;
-		  right_ptr -= size;
+		  s->left_ptr += size;
+		  s->right_ptr -= size;
 		  break;
 		}
 	    }
-	  while (left_ptr <= right_ptr);
+	  while (s->left_ptr <= s->right_ptr);
 	  
           /* Set up pointers for next iteration.  First determine whether
              left and right partitions are below the threshold size.  If so,
              ignore one or both.  Otherwise, push the larger partition's
              bounds on the stack and continue sorting the smaller one. */
 
-	  if(right_ptr <= lo && hi <= left_ptr) {
-	    // If the element we're looking for is in the just sorted portion
-	    // of the array, we're done.
-	    if(lo <= (char *)elem && (char *)elem <= hi) {
-	      return;
-	    }
-	    
-	    POP (lo, hi);
-	  } else
-	    if((char *)elem < mid) {
+	  if(s->right_ptr <= s->lo) {
+	    if(s->hi <= s->left_ptr) {
+	      // If the element we're looking for is in the just sorted portion
+	      // of the array, we're done.
+	    resume:
+	      if((s->lo <= (char *)elem && (char *)elem <= s->hi) ||
+		 (s->top - 1)->mid == (char *)elem) {
+		return;
+	      }
+	      
+	      SPOP (s->lo, s->hi);
+	    } else
+	      s->lo = s->left_ptr;
+	  } else if (s->hi <= s->left_ptr) {
+            s->hi = s->right_ptr;
+	  } else {
+	    if((char *)elem < s->mid) {
 	      /* Push right partition indices - sort left. */
-              PUSH (left_ptr, hi);
-              hi = right_ptr;
+              SPUSH (s->left_ptr, s->hi, s->mid);
+              s->hi = s->right_ptr;
 	    } else {
 	      /* Push left partition indices - sort right. */
-              PUSH (lo, right_ptr);
-              lo = left_ptr;
+              SPUSH (s->lo, s->right_ptr, s->mid);
+              s->lo = s->left_ptr;
 	    }
+	  }
         }
     }
 }
+#endif

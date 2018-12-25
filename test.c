@@ -1,14 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-
-typedef int (*__compar_d_fn_t) (const void *, const void *, void *);
-
-void _quicksort (void *const pbase, size_t total_elems,
-		 size_t size, __compar_d_fn_t cmp, void *arg);
-
-void
-quickselect (void *const pbase, size_t total_elems, size_t size,
-	     __compar_d_fn_t cmp, void *arg, void *elem);
+#include "quicksort.h"
 
 static int compare(const void *a, const void *b, void *dummy)
 {

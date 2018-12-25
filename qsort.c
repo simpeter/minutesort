@@ -1,4 +1,5 @@
 #include "shared.h"
+#include "quicksort.h"
 #ifdef USE_PMDK
 #	include <libpmem.h>
 
@@ -22,15 +23,6 @@ struct keyptr {
 static int infd[MAXPARTITIONS];
 static struct record *unsorted[MAXPARTITIONS];
 static ssize_t infsize[MAXPARTITIONS];
-
-typedef int (*__compar_d_fn_t) (const void *, const void *, void *);
-
-void _quicksort (void *const pbase, size_t total_elems,
-		 size_t size, __compar_d_fn_t cmp, void *arg);
-
-void
-quickselect (void *const pbase, size_t total_elems, size_t size,
-	     __compar_d_fn_t cmp, void *arg, size_t elem);
 
 static int compare(const void *a, const void *b, void *dummy)
 {
@@ -151,9 +143,9 @@ int main(int argc, char *argv[])
   for(size_t i = 0; i < nrecords; i++) {
 #ifdef QUICKSELECT
 #	ifdef DRAM_KEYS
-    quickselect(unsorted_ptrs, nrecords, sizeof(struct keyptr), compare, NULL, i);
+    quickselect(unsorted_ptrs, nrecords, sizeof(struct keyptr), compare, NULL, &unsorted_ptrs[i]);
 #	else
-    quickselect(unsorted_ptrs, nrecords, sizeof(struct record *), compare, NULL, i);
+    quickselect(unsorted_ptrs, nrecords, sizeof(struct record *), compare, NULL, &unsorted_ptrs[i]);
 #	endif
 #endif
 #ifdef USE_STDIO
