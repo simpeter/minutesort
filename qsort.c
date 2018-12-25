@@ -25,8 +25,12 @@ static ssize_t infsize[MAXPARTITIONS];
 
 typedef int (*__compar_d_fn_t) (const void *, const void *, void *);
 
-extern void _quicksort (void *const pbase, size_t total_elems,
-			size_t size, __compar_d_fn_t cmp, void *arg);
+void _quicksort (void *const pbase, size_t total_elems,
+		 size_t size, __compar_d_fn_t cmp, void *arg);
+
+void
+quickselect (void *const pbase, size_t total_elems, size_t size,
+	     __compar_d_fn_t cmp, void *arg, size_t elem);
 
 static int compare(const void *a, const void *b, void *dummy)
 {
@@ -126,13 +130,15 @@ int main(int argc, char *argv[])
   assert(r == 0);
 #endif
 
+#ifndef QUICKSELECT
   // Sort the pointers
-#ifdef DRAM_KEYS
+#	ifdef DRAM_KEYS
   /* qsort(unsorted_ptrs, nrecords, sizeof(struct keyptr), compare); */
   _quicksort(unsorted_ptrs, nrecords, sizeof(struct keyptr), compare, NULL);
-#else
+#	else
   /* qsort(unsorted_ptrs, nrecords, sizeof(struct record *), compare); */
-  _quicksort(unsorted_ptrs, nrecords, sizeof(struct keyptr), compare, NULL);
+  _quicksort(unsorted_ptrs, nrecords, sizeof(struct record *), compare, NULL);
+#	endif
 #endif
 
 #ifdef PERF_DEBUG
@@ -143,9 +149,16 @@ int main(int argc, char *argv[])
 
   // Store the output
   for(size_t i = 0; i < nrecords; i++) {
+#ifdef QUICKSELECT
+#	ifdef DRAM_KEYS
+    quickselect(unsorted_ptrs, nrecords, sizeof(struct keyptr), compare, NULL, i);
+#	else
+    quickselect(unsorted_ptrs, nrecords, sizeof(struct record *), compare, NULL, i);
+#	endif
+#endif
 #ifdef USE_STDIO
 #	ifdef DRAM_KEYS
-    // Attempt to read keys from DRAM (made it slower)
+    // Attempt to write keys from DRAM (made it slower)
 /*     size_t ret = fwrite(&unsorted_ptrs[i].key, KEYLEN, 1, outfile); */
 /*     assert(ret == 1); */
 /*     ret = fwrite(&unsorted_ptrs[i].ptr->val, VALLEN, 1, outfile); */
