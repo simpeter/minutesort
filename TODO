@@ -21,7 +21,8 @@ x Reduce pointer size
 x Allow non-power-of-two number of mappers
 
 * qsort file-by-file (as we read them) and then merge-sort the lot?
-
+  * To overlap with the read phase. Not sure if useful (read phase is very short).
+   
 x Look at membw_stdio to see if we're conducting IO efficiently
   x We are. 7.2 GB/s read & write throughput.
 
@@ -30,5 +31,8 @@ x qsort on NVM (to overlap compute with IO)
 
 x partition with fread didn't make a perf difference versus mmap
 
-* Use quickselect instead of sort to find lowest elements as quickly
+x Use quickselect instead of sort to find lowest elements as quickly
   as possible. Use to overlap with writing (current bottleneck)
+   x Made it slightly slower
+   * Maybe start another thread to write the data asynchronously?
+   * Use async IO? (not sure if that's supported with NVM)

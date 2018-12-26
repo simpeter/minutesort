@@ -346,17 +346,17 @@ quickselect (void *const pbase, size_t total_elems, size_t size,
              left and right partitions are below the threshold size.  If so,
              ignore one or both.  Otherwise, push the larger partition's
              bounds on the stack and continue sorting the smaller one. */
-
+	  
 	  if(s->right_ptr <= s->lo) {
+	    // If the element we're looking for is in the just sorted portion
+	    // of the array, we're done.
+	  resume:
+	    if((s->lo <= (char *)elem && (char *)elem <= s->hi) ||
+	       (s->top - 1)->mid == (char *)elem) {
+	      return;
+	    }
+	    
 	    if(s->hi <= s->left_ptr) {
-	      // If the element we're looking for is in the just sorted portion
-	      // of the array, we're done.
-	    resume:
-	      if((s->lo <= (char *)elem && (char *)elem <= s->hi) ||
-		 (s->top - 1)->mid == (char *)elem) {
-		return;
-	      }
-	      
 	      SPOP (s->lo, s->hi);
 	    } else
 	      s->lo = s->left_ptr;
