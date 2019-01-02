@@ -1,5 +1,6 @@
 #include "shared.h"
 #include "quicksort.h"
+#	include <libpmem.h>
 #ifdef USE_PMDK
 #	include <libpmem.h>
 
@@ -86,12 +87,24 @@ int main(int argc, char *argv[])
   // Generate array of pointers
 #ifdef DRAM_KEYS
 #	ifdef USE_HUGEPAGES
+  char tmpfilename[256];
+  snprintf(tmpfilename, 256, "%s.tmp", argv[1]);
+  /* int tmpfd = open(tmpfilename, O_CREAT | O_RDWR, 0644); */
+  /* assert(tmpfd != -1); */
+  /* r = ftruncate(tmpfd, sizeof(struct keyptr) * nrecords); */
+  /* assert(r == 0); */
+  
   // Use explicit hugepages
+  /* struct keyptr *unsorted_ptrs = */
+  /*   mmap(NULL, sizeof(struct keyptr) * nrecords, */
+  /* 	 PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_POPULATE, */
+  /* 	 -1, 0); */
   struct keyptr *unsorted_ptrs =
-    mmap(NULL, sizeof(struct keyptr) * nrecords,
-  	 PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | MAP_POPULATE,
-  	 -1, 0);
+    pmem_map_file(tmpfilename, sizeof(struct keyptr) * nrecords, PMEM_FILE_CREATE, 0,
+		  NULL, NULL);
   assert(unsorted_ptrs != MAP_FAILED);
+  r = pmem_is_pmem(unsorted_ptrs, sizeof(struct keyptr) * nrecords);
+  assert(r == 1);
 #	else
   struct keyptr *unsorted_ptrs = malloc(sizeof(struct keyptr) * nrecords);
   assert(unsorted_ptrs != NULL);
@@ -189,6 +202,7 @@ int main(int argc, char *argv[])
 #else
   close(outfd);
 #endif
+  pmem_unmap(unsorted_ptrs, sizeof(struct keyptr) * nrecords);
 
 #if !defined(DRAM_KEYS) || !defined(USE_HUGEPAGES)
   free(unsorted_ptrs);

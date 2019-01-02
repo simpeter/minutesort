@@ -351,8 +351,10 @@ quickselect (void *const pbase, size_t total_elems, size_t size,
 	    // If the element we're looking for is in the just sorted portion
 	    // of the array, we're done.
 	  resume:
-	    if((s->lo <= (char *)elem && (char *)elem <= s->hi) ||
-	       (s->top - 1)->mid == (char *)elem) {
+	    // XXX: Appears to still be buggy...
+	    if((s->lo <= (char *)elem && (char *)elem <= s->hi)) {
+	       /* || */
+	       /* (s->top - 1)->mid == (char *)elem) { */
 	      return;
 	    }
 	    
